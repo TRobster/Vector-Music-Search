@@ -12,10 +12,10 @@ _logger = logging.getLogger(__name__)
 
 def _embed(texts: List[str]) -> np.ndarray:
     start = time.perf_counter()
-    embs = _model.encode(texts, convert_to_numpy=True)
+    embs = _model.encode(texts, convert_to_numpy=True) # compute embeddings
     elapsed_ms = (time.perf_counter() - start) * 1000.0
     _logger.info("embed: encoded %d texts in %.2f ms", len(texts), elapsed_ms)
-    return embs
+    return embs # return embeddings
 
 
 class VectorStore:
@@ -32,18 +32,27 @@ class VectorStore:
         """Add documents to the store and compute embeddings for them.
 
         Each document is a dict with at least keys: `id` and `text`.
+
+        Understanding the code:
+        - Extract texts from documents
+        - Compute embeddings for texts
+        - If emb is empty, assign vectors to emb
+        - Else stack new vectors to existing emb
+        Args:
+            documents: list of documents to add
+
         """
-        texts = [d["text"] for d in documents]
-        vectors = _embed(texts)
-        if vectors.ndim == 1:
-            vectors = vectors[np.newaxis, :]
+        texts = [d["text"] for d in documents] # O(n) extraction of texts from documents
+        vectors = _embed(texts) ### get embeddings for texts
+        if vectors.ndim == 1:     ### single vector case
+            vectors = vectors[np.newaxis, :] ### make it 2-D tuple 
 
-        if self.embs.size == 0:
-            self.embs = vectors
+        if self.embs.size == 0: ### first time adding documents (base case when emb is empty)
+            self.embs = vectors ### assign vectors to empty embs
         else:
-            self.embs = np.vstack([self.embs, vectors])
+            self.embs = np.vstack([self.embs, vectors]) ### stack new vectors to existing embs if embs not empty
 
-        self.docs.extend(documents)
+        self.docs.extend(documents) ### add new documents to existing docs list
 
     def search(self, query: str, k: int = 5):
         """Return top-k documents most similar to the query.
@@ -52,7 +61,7 @@ class VectorStore:
         """
         start = time.perf_counter()
 
-        qvec = _embed([query])[0]
+        qvec = _embed([query])[0] 
         if qvec.ndim != 1:
             qvec = qvec[0]
 

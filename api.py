@@ -8,7 +8,6 @@ from data import DOCUMENTS
 
 
 app = FastAPI()
-
 # Build an in-memory vector store at import time (small demo dataset)
 store = build_store_from_docs(DOCUMENTS)
 
